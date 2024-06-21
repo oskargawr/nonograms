@@ -143,7 +143,14 @@ class Nonogram:
 
         return nonogram
 
-    def runGA(self, fitness_func, generations, sol_per_pop, mutation_percent_genes, num_parents_mating):
+    def runGA(
+        self,
+        fitness_func,
+        generations,
+        sol_per_pop,
+        mutation_percent_genes,
+        num_parents_mating,
+    ):
         @staticmethod
         def arrayEquals(arr1, arr2):
             if len(arr1) != len(arr2):
@@ -152,9 +159,13 @@ class Nonogram:
                 if arr1[i] != arr2[i]:
                     return False
             return True
+
         def on_generation(ga_instance):
             best_solution, solution_fitness, solution_idx = ga_instance.best_solution()
-            print(f"Generation {ga_instance.generations_completed}: Best Fitness = {solution_fitness}")
+            print(
+                f"Generation {ga_instance.generations_completed}: Best Fitness = {solution_fitness}"
+            )
+
         def fitness(ga_instance, solution, solution_idx):
             resultRow = []
             resultCol = []
@@ -240,10 +251,14 @@ class Nonogram:
                     wrong -= 10 * abs(len(self.rows[i]))  # Penalty for missing rows
                     continue
                 if len(self.rows[i]) != len(resultRow[i]):
-                    wrong -= abs(len(self.rows[i]) - len(resultRow[i])) * 10  # Larger penalty for block count difference
+                    wrong -= (
+                        abs(len(self.rows[i]) - len(resultRow[i])) * 10
+                    )  # Larger penalty for block count difference
                 min_len = min(len(self.rows[i]), len(resultRow[i]))
                 for j in range(min_len):
-                    wrong -= abs(self.rows[i][j] - resultRow[i][j])  # Penalty for length mismatch
+                    wrong -= abs(
+                        self.rows[i][j] - resultRow[i][j]
+                    )  # Penalty for length mismatch
                 # Extra penalty for position mismatch
                 for j in range(min_len):
                     if self.rows[i][j] != resultRow[i][j]:
@@ -252,13 +267,19 @@ class Nonogram:
             # Evaluate columns
             for i in range(len(self.columns)):
                 if i >= len(resultCol):
-                    wrong -= 10 * abs(len(self.columns[i]))  # Penalty for missing columns
+                    wrong -= 10 * abs(
+                        len(self.columns[i])
+                    )  # Penalty for missing columns
                     continue
                 if len(self.columns[i]) != len(resultCol[i]):
-                    wrong -= abs(len(self.columns[i]) - len(resultCol[i])) * 10  # Larger penalty for block count difference
+                    wrong -= (
+                        abs(len(self.columns[i]) - len(resultCol[i])) * 10
+                    )  # Larger penalty for block count difference
                 min_len = min(len(self.columns[i]), len(resultCol[i]))
                 for j in range(min_len):
-                    wrong -= abs(self.columns[i][j] - resultCol[i][j])  # Penalty for length mismatch
+                    wrong -= abs(
+                        self.columns[i][j] - resultCol[i][j]
+                    )  # Penalty for length mismatch
                 # Extra penalty for position mismatch
                 for j in range(min_len):
                     if self.columns[i][j] != resultCol[i][j]:
@@ -372,47 +393,45 @@ class Nonogram:
             return wrong
 
         def best_fit(ga_instance, solution, solution_idx):
-            tab = [[0 for i in range(len(self.columns))] for j in range(len(self.rows))]
+            tab = [[0] * len(self.columns) for _ in range(len(self.rows))]
             iterator = 0
             wrong = 0
             solution = solution.astype(int)
-            for i in range(len(self.rows)):
-                for j in range(len(self.rows[i])):
-                    for k in range(self.rows[i][j]):
-                        if solution[iterator] + k < len(self.rows):
-                            tab[i][solution[iterator] + k] = 1
+
+            for i, row in enumerate(self.rows):
+                for j, count in enumerate(row):
+                    for k in range(count):
+                        pos = solution[iterator] + k
+                        if pos < len(self.rows):
+                            tab[i][pos] = 1
                         else:
                             wrong -= 1
                     iterator += 1
+
             resultCol = []
-            solution = tab
-            for i in range(len(solution[0])):
-                counter = 0
+            for col in zip(*tab):
                 temp = []
-                for j in range(len(solution[i])):
-                    if solution[j][i] == 1:
+                counter = 0
+                for cell in col:
+                    if cell == 1:
                         counter += 1
-                    elif counter != 0:
+                    elif counter:
                         temp.append(counter)
                         counter = 0
-                if counter != 0:
+                if counter:
                     temp.append(counter)
                 resultCol.append(temp)
-            for i in range(len(self.columns)):
-                if len(self.columns[i]) == len(resultCol[i]):
-                    for j in range(len(self.columns[i])):
-                        if self.columns[i][j] != resultCol[i][j]:
-                            wrong -= 1
+
+            for col, res_col in zip(self.columns, resultCol):
+                if len(col) == len(res_col):
+                    wrong -= sum(1 for a, b in zip(col, res_col) if a != b)
                 else:
-                    wrong -= math.fabs(len(self.columns[i]) - len(resultCol[i]))
-                    if len(self.columns[i]) > len(resultCol[i]):
-                        for j in range(len(resultCol[i])):
-                            if self.columns[i][j] != resultCol[i][j]:
-                                wrong -= 1
+                    wrong -= abs(len(col) - len(res_col))
+                    if len(col) > len(res_col):
+                        wrong -= sum(1 for a, b in zip(col, res_col) if a != b)
                     else:
-                        for j in range(len(self.columns[i])):
-                            if self.columns[i][j] != resultCol[i][j]:
-                                wrong -= 1
+                        wrong -= sum(1 for a, b in zip(res_col, col) if a != b)
+
             return wrong
 
         gene_range = [0, 1]
@@ -454,7 +473,7 @@ class Nonogram:
             crossover_type=crossover_type,
             mutation_type=mutation_type,
             mutation_percent_genes=mutation_percent_genes,
-            on_generation=on_generation
+            on_generation=on_generation,
         )
 
         ga_instance.run()
@@ -482,13 +501,12 @@ class Nonogram:
         def fitness(temp):
             resultRow = []
             resultCol = []
-            solution = []
-            for i in temp:
-                solution.append(i[0])
+            solution = [i[0] for i in temp]
             solution = [
                 solution[i : i + len(self.rows)]
                 for i in range(0, len(solution), len(self.rows))
             ]
+
             for i in solution:
                 counter = 0
                 temp = []
@@ -501,6 +519,7 @@ class Nonogram:
                 if counter != 0:
                     temp.append(counter)
                 resultRow.append(temp)
+
             for i in range(len(solution[0])):
                 counter = 0
                 temp = []
@@ -524,13 +543,12 @@ class Nonogram:
         def fitness_tuning(temp):
             resultRow = []
             resultCol = []
-            solution = []
-            for i in temp:
-                solution.append(i[0])
+            solution = [i[0] for i in temp]
             solution = [
                 solution[i : i + len(self.rows)]
                 for i in range(0, len(solution), len(self.rows))
             ]
+
             for i in solution:
                 counter = 0
                 temp = []
@@ -543,6 +561,7 @@ class Nonogram:
                 if counter != 0:
                     temp.append(counter)
                 resultRow.append(temp)
+
             for i in range(len(solution[0])):
                 counter = 0
                 temp = []
@@ -571,54 +590,6 @@ class Nonogram:
                         for j in range(len(self.rows[i])):
                             if self.rows[i][j] != resultRow[i][j]:
                                 wrongCounter -= 1
-                if len(self.cols[i]) == len(resultCol[i]):
-                    for j in range(len(self.cols[i])):
-                        if self.cols[i][j] != resultCol[i][j]:
-                            wrongCounter -= 1
-                else:
-                    wrongCounter -= math.fabs(len(self.cols[i]) - len(resultCol[i]))
-                    if len(self.cols[i]) > len(resultCol[i]):
-                        for j in range(len(resultCol[i])):
-                            if self.cols[i][j] != resultCol[i][j]:
-                                wrongCounter -= 1
-                    else:
-                        for j in range(len(self.cols[i])):
-                            if self.cols[i][j] != resultCol[i][j]:
-                                wrongCounter -= 1
-            return -wrongCounter
-
-        def best_fit(solution):
-            tab = [[0 for i in range(len(self.columns))] for j in range(len(self.rows))]
-            iterator = 0
-            wrongCounter = 0
-            temp = []
-            solution = np.round(solution).astype(int)
-            for i in solution:
-                temp.append(i[0])
-            solution = temp
-            for i in range(len(self.rows)):
-                for j in range(len(self.rows[i])):
-                    for k in range(self.rows[i][j]):
-                        if solution[iterator] + k < len(self.rows):
-                            tab[i][solution[iterator] + k] = 1
-                        else:
-                            wrongCounter -= 1
-                    iterator += 1
-            resultCol = []
-            solution = tab
-            for i in range(len(solution[0])):
-                counter = 0
-                temp = []
-                for j in range(len(solution)):
-                    if solution[j][i] == 1:
-                        counter += 1
-                    elif counter != 0:
-                        temp.append(counter)
-                        counter = 0
-                if counter != 0:
-                    temp.append(counter)
-                resultCol.append(temp)
-            for i in range(len(self.columns)):
                 if len(self.columns[i]) == len(resultCol[i]):
                     for j in range(len(self.columns[i])):
                         if self.columns[i][j] != resultCol[i][j]:
@@ -634,6 +605,55 @@ class Nonogram:
                             if self.columns[i][j] != resultCol[i][j]:
                                 wrongCounter -= 1
             return -wrongCounter
+
+        def best_fit(solution):
+            # Inicjalizacja siatki
+            tab = np.zeros((len(self.rows), len(self.columns)), dtype=int)
+            wrong_counter = 0
+
+            # Konwersja solution na listę liczb całkowitych
+            solution = np.round(solution).astype(int).flatten().tolist()
+
+            # Wypełnianie siatki na podstawie solution
+            iterator = 0
+            for row_idx, row in enumerate(self.rows):
+                for segment_length in row:
+                    start_position = solution[iterator]
+                    if start_position + segment_length <= len(self.columns):
+                        tab[
+                            row_idx, start_position : start_position + segment_length
+                        ] = 1
+                    else:
+                        wrong_counter -= 1
+                    iterator += 1
+
+            # Generowanie wynikowych kolumn
+            result_col = []
+            for col_idx in range(tab.shape[1]):
+                col_segment_lengths = []
+                counter = 0
+                for row_idx in range(tab.shape[0]):
+                    if tab[row_idx, col_idx] == 1:
+                        counter += 1
+                    elif counter > 0:
+                        col_segment_lengths.append(counter)
+                        counter = 0
+                if counter > 0:
+                    col_segment_lengths.append(counter)
+                result_col.append(col_segment_lengths)
+
+            # Sprawdzanie poprawności kolumn
+            for col_idx, col in enumerate(self.columns):
+                if len(col) != len(result_col[col_idx]):
+                    wrong_counter -= abs(len(col) - len(result_col[col_idx]))
+                for seg_idx, seg_length in enumerate(col):
+                    if (
+                        seg_idx >= len(result_col[col_idx])
+                        or seg_length != result_col[col_idx][seg_idx]
+                    ):
+                        wrong_counter -= 1
+
+            return -wrong_counter
 
         options = {"c1": c1, "c2": c2, "w": w, "k": k, "p": p}
         if fitness_func == "fitness" or fitness_func == "fitness_tuning":
@@ -726,4 +746,5 @@ class Nonogram:
                     if start_position + k < len(grid[i]):
                         grid[i][start_position + k] = 1
                 iterator += 1
+        print(grid)
         return np.array(grid).flatten()

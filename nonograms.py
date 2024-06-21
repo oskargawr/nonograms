@@ -534,48 +534,6 @@ class Nonogram:
                 resultCol.append(temp)
             wrongCounter = 0
             for i in range(len(self.rows)):
-                if not arrayEquals(self.rows[i], resultRow[i]):
-                    wrongCounter -= 1
-                if not arrayEquals(self.columns[i], resultCol[i]):
-                    wrongCounter -= 1
-            return -wrongCounter
-
-        def fitness_tuning(temp):
-            resultRow = []
-            resultCol = []
-            solution = [i[0] for i in temp]
-            solution = [
-                solution[i : i + len(self.rows)]
-                for i in range(0, len(solution), len(self.rows))
-            ]
-
-            for i in solution:
-                counter = 0
-                temp = []
-                for j in i:
-                    if j == 1:
-                        counter += 1
-                    elif counter != 0:
-                        temp.append(counter)
-                        counter = 0
-                if counter != 0:
-                    temp.append(counter)
-                resultRow.append(temp)
-
-            for i in range(len(solution[0])):
-                counter = 0
-                temp = []
-                for j in range(len(solution[i])):
-                    if solution[j][i] == 1:
-                        counter += 1
-                    elif counter != 0:
-                        temp.append(counter)
-                        counter = 0
-                if counter != 0:
-                    temp.append(counter)
-                resultCol.append(temp)
-            wrongCounter = 0
-            for i in range(len(self.rows)):
                 if len(self.rows[i]) == len(resultRow[i]):
                     for j in range(len(self.rows[i])):
                         if self.rows[i][j] != resultRow[i][j]:
@@ -656,11 +614,8 @@ class Nonogram:
             return -wrong_counter
 
         options = {"c1": c1, "c2": c2, "w": w, "k": k, "p": p}
-        if fitness_func == "fitness" or fitness_func == "fitness_tuning":
-            if fitness_func == "fitness":
-                fitness_func = fitness
-            elif fitness_func == "fitness_tuning":
-                fitness_func = fitness_tuning
+        if fitness_func == "fitness":
+            fitness_func = fitness
 
             n = len(self.rows) * len(self.columns)
             optimizer = ps.discrete.BinaryPSO(

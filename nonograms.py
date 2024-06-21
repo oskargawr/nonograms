@@ -407,7 +407,6 @@ class Nonogram:
                         else:
                             wrong -= 1
                     iterator += 1
-
             resultCol = []
             for col in zip(*tab):
                 temp = []
